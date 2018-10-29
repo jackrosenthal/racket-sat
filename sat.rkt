@@ -76,36 +76,35 @@
         [(list-rest sym args)
          (cons sym (map boolean->cnf args))]))))
 
+
 ;; Assume a variable holds the value (either #t or #f) in the specified
 ;; equation. If you are looking at the steps for DPLL, this is the
 ;; "unit-propagate" step.
 (define (assume var value expr)
-  (define (reduce-junction)
-    (let* ([sym (car expr)]
-           [args (cdr expr)]
-           [look-for (case sym
-                       [(and) #f]
-                       [(or) #t])])
-      (define (reduction-function item acc)
-        (if (eq? acc look-for)
-          acc
-          (let ([result (assume var value item)])
-            (cond
-              [(eq? result look-for) result]
-              [(eq? result (not look-for)) acc]
-              [else (cons result acc)]))))
-      (let ([result (foldl reduction-function '() args)])
-        (cond
-          [(null? result) (not look-for)]
-          [(eq? result look-for) result]
-          [else (cons sym result)]))))
   (cond
     [(eq? var expr) value]
     [(equal? `(not ,var) expr) (not value)]
     [(symbol? expr) expr]
-    [else (case (car expr)
-            [(and or) (reduce-junction)]
-            [else expr])]))
+    [else
+      (match expr
+        [`(not ,_) expr]
+        [(list-rest sym args)
+         (let ([look-for (case sym
+                           [(and) #f]
+                           [(or) #t])])
+           (define (f item acc)
+             (if (eq? acc look-for)
+               acc
+               (let ([result (assume var value item)])
+                 (cond
+                   [(eq? result look-for) result]
+                   [(eq? result (not look-for)) acc]
+                   [else (cons result acc)]))))
+           (let ([result (foldl f '() args)])
+             (cond
+               [(null? result) (not look-for)]
+               [(eq? result look-for) result]
+               [else (cons sym result)])))])]))
 
 ;; DPLL Algorithm. Returns a set of bindings (list of conses) or #f.
 (define (solve-cnf expr)
