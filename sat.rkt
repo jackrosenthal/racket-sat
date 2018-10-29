@@ -84,8 +84,8 @@
     (let* ([sym (car expr)]
            [args (cdr expr)]
            [look-for (case sym
-                      [(and) #f]
-                      [(or) #t])])
+                       [(and) #f]
+                       [(or) #t])])
       (define (reduction-function item acc)
         (if (eq? acc look-for)
           acc
@@ -95,10 +95,10 @@
               [(eq? result (not look-for)) acc]
               [else (cons result acc)]))))
       (let ([result (foldl reduction-function '() args)])
-       (cond
-        [(null? result) (not look-for)]
-        [(eq? result look-for) result]
-        [else (cons sym result)]))))
+        (cond
+          [(null? result) (not look-for)]
+          [(eq? result look-for) result]
+          [else (cons sym result)]))))
   (cond
     [(eq? var expr) value]
     [(equal? `(not ,var) expr) (not value)]
